@@ -1,26 +1,43 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap';
 import * as yup from 'yup';
-import * as _ from 'lodash';
+import i18next from 'i18next';
 import getDocument from './parser.js';
-import { renderErrors, renderFeed, renderPosts } from './view.js';
+import resources from './locales/index.js';
+import initView from './view.js';
 
-const onChange = require('on-change');
 const axios = require('axios');
 
 const app = () => {
+  const domElements = {
+    form: document.querySelector('form'),
+    input: document.querySelector('input'),
+    button: document.querySelector('button[type$=submit]'),
+    feedback: document.querySelector('.feedback'),
+  };
+
   const state = {
     form: {
       errorMessage: '',
-      valid: null,
     },
     feeds: [],
     posts: [],
+    uiState: {
+      openedPosts: [],
+    },
     processState: 'active',
+    rssLinks: [],
   };
 
-  const rssLinks = [];
+  const watchedState = initView(state, domElements);
 
-  const schema = () => yup.string().url('Ссылка должна быть валидным URL').notOneOf(rssLinks, 'RSS уже существует');
+  i18next.init({
+    lng: 'ru',
+    debug: 'true',
+    resources,
+  });
+
+  const schema = () => yup.string().url(i18next.t('formErrors.invalid')).notOneOf(state.rssLinks, i18next.t('formErrors.used'));
 
   const validate = (link) => {
     try {
@@ -30,99 +47,95 @@ const app = () => {
       return e.message;
     }
   };
-  const domElements = {
-    form: document.querySelector('form'),
-    input: document.querySelector('input'),
-    button: document.querySelector('button'),
-    feedback: document.querySelector('.feedback'),
-  };
 
-  const processStateHandler = (processState, appState) => {
-    switch (processState) {
-      case 'validate': {
-        domElements.button.setAttribute('disabled', true);
-        renderErrors(appState.form);
-        break;
-      }
-      case 'filling':
-        renderFeed(_.last(appState.feeds));
-        renderPosts(appState.posts);
-        domElements.button.removeAttribute('disabled');
-        domElements.feedback.classList.remove('text-danger');
-        domElements.feedback.textContent = 'RSS успешно загружен';
-        break;
-      case 'failing': {
-        renderErrors(appState.form);
-        domElements.button.removeAttribute('disabled');
-        break;
-      }
-      case 'update':
-        break;
-      default:
-        break;
-    }
-  };
-  const watchedState = onChange(state, (path, value) => {
-    if (path === 'processState') {
-      processStateHandler(value, state);
-    }
-  });
-  const loadContentsFromLink = (link) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(link)}`)
-    .then((response) => {
-      if (response.status) {
-        return getDocument(response.data.contents);
-      }
-      throw new Error('Ошибка сети');
-    });
+  const loadContentsFromLink = (link) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`)
+    .then((response) => getDocument(response.data.contents));
 
-  const normalizeContent = (content) => {
-    const feedTitle = content.querySelector('title').textContent;
-    const feedDescription = content.querySelector('description').textContent;
-    const id = rssLinks.length;
-    watchedState.feeds.push({ id, feedTitle, feedDescription });
-    const posts = content.querySelectorAll('item');
+  const addPosts = (posts, id) => {
     [...posts].reverse().forEach((item) => {
       const postId = watchedState.posts.length + 1;
       const postTitle = item.querySelector('title').textContent;
       const postDescription = item.querySelector('description').textContent;
-      const postlink = item.querySelector('link').textContent;
+      const postLink = item.querySelector('link').textContent;
       const post = {
         feedId: id,
         postId,
         postTitle,
         postDescription,
-        postlink,
+        postLink,
       };
       watchedState.posts.push(post);
     });
-    watchedState.processState = 'filling';
+  };
+  const getDateInMs = (stringDate) => new Date(stringDate).getTime();
+
+  const normalizeContent = (content) => {
+    const feedTitle = content.querySelector('title').textContent;
+    const feedDescription = content.querySelector('description').textContent;
+    const lastBuildDate = content.querySelector('item').querySelector('pubDate').textContent;
+    const lastUpdate = getDateInMs(lastBuildDate);
+    const id = state.rssLinks.length;
+    watchedState.feeds.push({
+      id, lastUpdate, feedTitle, feedDescription,
+    });
+
+    const posts = content.querySelectorAll('item');
+    addPosts(posts, id);
+    watchedState.processState = 'loaded';
+  };
+  const networkErrorHandler = () => {
+    const errMessage = i18next.t('network');
+    watchedState.form.errorMessage = errMessage;
+    watchedState.processState = 'failed';
+    throw new Error(errMessage);
+  };
+
+  const updateContent = () => {
+    watchedState.rssLinks.forEach((value, index) => {
+      const content = loadContentsFromLink(value);
+      const { lastUpdate } = watchedState.feeds[index];
+      content.then((doc) => {
+        const lastPostDate = doc.querySelector('item').querySelector('pubDate').textContent;
+        const lastPostDateInMs = getDateInMs(lastPostDate);
+        if (lastUpdate !== lastPostDateInMs) {
+          const posts = doc.querySelectorAll('item');
+          watchedState.feeds[index].lastUpdate = lastPostDateInMs;
+          const newPosts = [...posts].filter((post) => {
+            const postDate = post.querySelector('pubDate').textContent;
+            const postDateInMs = getDateInMs(postDate);
+            return lastUpdate < postDateInMs;
+          });
+          addPosts(newPosts, index + 1);
+          watchedState.processState = 'updated';
+          watchedState.processState = 'active';
+          setTimeout(updateContent, 5000);
+        }
+      })
+        .catch(() => networkErrorHandler());
+    });
   };
 
   domElements.form.addEventListener('submit', (event) => {
     event.preventDefault();
+    watchedState.processState = 'processed';
     const link = domElements.input.value;
     const errorMessage = validate(link);
     if (errorMessage.length < 1) {
-      rssLinks.push(link);
-      watchedState.form.valid = true;
-      watchedState.form.errorMessage = '';
-      watchedState.processState = 'validate';
       const contents = loadContentsFromLink(link);
       contents
-        .catch((e) => {
-          watchedState.form.valid = false;
-          watchedState.form.errorMessage = e.message;
-          watchedState.processState = 'failing';
-          throw new Error(e.message);
-        })
         .then((data) => {
+          watchedState.rssLinks.push(link);
           normalizeContent(data);
+          setTimeout(updateContent, 5000);
+        })
+        .catch(() => {
+          networkErrorHandler();
         });
     } else {
-      watchedState.form.valid = false;
       watchedState.form.errorMessage = errorMessage;
-      watchedState.processState = 'validate';
+      watchedState.processState = 'failed';
     }
   });
 };
+
 export default app;
