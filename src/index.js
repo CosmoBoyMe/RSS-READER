@@ -4,7 +4,6 @@ import i18next from 'i18next';
 import getDocument from './parser.js';
 import resources from './locales/index.js';
 import initView from './view.js';
-import { isLength } from 'lodash-es';
 
 const axios = require('axios');
 
