@@ -1,4 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import * as yup from 'yup';
 import i18next from 'i18next';
