@@ -86,7 +86,7 @@ const app = () => {
     const errMessage = i18next.t('network');
     watchedState.form.errorMessage = errMessage;
     watchedState.processState = 'failed';
-    throw new Error(errMessage);
+    // throw new Error(errMessage);
   };
 
   const updateContent = () => {
