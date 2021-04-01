@@ -72,9 +72,9 @@ const createLink = (postId, postTitle, postLink, openedPosts) => {
   a.setAttribute('target', 'blank');
   a.textContent = postTitle;
   if (isLinkOpened(postId, openedPosts)) {
-    a.classList.add('fw-normal');
+    a.classList.add('font-weight-normal');
   } else {
-    a.classList.add('fw-bold');
+    a.classList.add('font-weight-bold');
   }
   return a;
 };
