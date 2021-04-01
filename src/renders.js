@@ -57,8 +57,8 @@ const createButton = (postId, postTitle, postDescription, postLink, openedPosts)
     modalBody.textContent = postDescription;
     openedPosts.push({ id: postId });
     const postLinkElement = event.target.previousElementSibling;
-    postLinkElement.classList.remove('fw-bold');
-    postLinkElement.classList.add('fw-normal');
+    postLinkElement.classList.remove('font-weight-bold');
+    postLinkElement.classList.add('font-weight-normal');
   });
 
   return button;
