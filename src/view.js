@@ -9,16 +9,19 @@ const processStateHandler = (processState, state, domElements) => {
   switch (processState) {
     case 'processed':
       domElements.button.setAttribute('disabled', true);
+      domElements.input.setAttribute('readonly', true);
       break;
     case 'loaded':
       renderFeed(_.last(state.feeds));
       renderPosts(state);
       renderHeaderAfterLoad();
       domElements.button.removeAttribute('disabled');
+      domElements.input.removeAttribute('readonly');
       break;
     case 'failed': {
       renderError(state.form);
       domElements.button.removeAttribute('disabled');
+      domElements.input.removeAttribute('readonly');
       break;
     }
     case 'updated':

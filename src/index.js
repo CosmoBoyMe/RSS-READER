@@ -113,7 +113,7 @@ const app = () => {
         .catch(() => networkErrorHandler());
     });
   };
-  const isDocumentRss = ( doc) => {
+  const isDocumentRss = (doc) => {
     const rssTag = doc.querySelector('rss');
     return rssTag !== null;
   };
