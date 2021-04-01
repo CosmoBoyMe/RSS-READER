@@ -4,6 +4,7 @@ import i18next from 'i18next';
 import getDocument from './parser.js';
 import resources from './locales/index.js';
 import initView from './view.js';
+import { isLength } from 'lodash-es';
 
 const axios = require('axios');
 
@@ -86,7 +87,7 @@ const app = () => {
     const errMessage = i18next.t('network');
     watchedState.form.errorMessage = errMessage;
     watchedState.processState = 'failed';
-    // throw new Error(errMessage);
+    throw new Error(errMessage);
   };
 
   const updateContent = () => {
@@ -113,7 +114,10 @@ const app = () => {
         .catch(() => networkErrorHandler());
     });
   };
-
+  const isDocumentRss = ( doc) => {
+    const rssTag = doc.querySelector('rss');
+    return rssTag !== null;
+  };
   domElements.form.addEventListener('submit', (event) => {
     event.preventDefault();
     watchedState.processState = 'processed';
@@ -123,9 +127,15 @@ const app = () => {
       const contents = loadContentsFromLink(link);
       contents
         .then((data) => {
-          watchedState.rssLinks.push(link);
-          normalizeContent(data);
-          setTimeout(updateContent, 5000);
+          const rss = isDocumentRss(data);
+          if (rss) {
+            watchedState.rssLinks.push(link);
+            normalizeContent(data);
+            setTimeout(updateContent, 5000);
+          } else {
+            watchedState.form.errorMessage = i18next.t('formErrors.isNotRss');
+            watchedState.processState = 'failed';
+          }
         })
         .catch(() => {
           networkErrorHandler();
