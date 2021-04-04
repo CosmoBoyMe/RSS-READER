@@ -1,11 +1,10 @@
 import 'bootstrap';
 import * as yup from 'yup';
 import i18next from 'i18next';
+import axios from 'axios';
 import getDocument from './parser.js';
 import resources from './locales/index.js';
 import initView from './view.js';
-
-const axios = require('axios');
 
 const app = () => {
   const domElements = {

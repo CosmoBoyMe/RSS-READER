@@ -1,9 +1,8 @@
 import * as _ from 'lodash';
+import onChange from 'on-change';
 import {
   renderError, renderFeed, renderPosts, renderHeaderAfterLoad,
 } from './renders.js';
-
-const onChange = require('on-change');
 
 const processStateHandler = (processState, state, domElements) => {
   switch (processState) {
