@@ -6,25 +6,24 @@ import {
 
 const processStateHandler = (processState, state, domElements) => {
   switch (processState) {
-    case 'processed':
+    case 'loading':
       domElements.button.setAttribute('disabled', true);
       domElements.input.setAttribute('readonly', true);
       break;
-    case 'loaded':
-      renderFeed(_.last(state.feeds));
-      renderPosts(state);
-      renderHeaderAfterLoad();
-      domElements.button.removeAttribute('disabled');
-      domElements.input.removeAttribute('readonly');
+    case 'succeeded': {
+      renderFeed(_.last(state.feeds), domElements);
+      renderPosts(state.posts, state.uiState, domElements);
+      renderHeaderAfterLoad(domElements);
       break;
+    }
     case 'failed': {
-      renderError(state.form);
+      renderError(state.form.errorMessage);
       domElements.button.removeAttribute('disabled');
       domElements.input.removeAttribute('readonly');
       break;
     }
     case 'updated':
-      renderPosts(state);
+      renderPosts(state.posts, state.uiState, domElements);
       break;
     default:
       break;

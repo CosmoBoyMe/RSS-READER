@@ -2,16 +2,20 @@ import 'bootstrap';
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
-import getDocument from './parser.js';
+import _, { update } from 'lodash';
+import parseContents from './parser.js';
 import resources from './locales/index.js';
 import initView from './view.js';
+import validate from './validate.js';
 
 const app = () => {
   const domElements = {
-    form: document.querySelector('form'),
-    input: document.querySelector('input'),
-    button: document.querySelector('button[type$=submit]'),
+    form: document.querySelector('.rss-form'),
+    input: document.querySelector('.rss-form input'),
+    button: document.querySelector('.rss-form button[type$=submit]'),
     feedback: document.querySelector('.feedback'),
+    feeds: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
   };
 
   const state = {
@@ -23,8 +27,7 @@ const app = () => {
     uiState: {
       openedPosts: [],
     },
-    processState: 'active',
-    rssLinks: [],
+    processState: 'idle',
   };
 
   const watchedState = initView(state, domElements);
@@ -35,112 +38,94 @@ const app = () => {
     resources,
   });
 
-  const schema = () => yup.string().url(i18next.t('formErrors.invalid')).notOneOf(state.rssLinks, i18next.t('formErrors.used'));
+  const rssLinks = [];
 
-  const validate = (link) => {
-    try {
-      schema().validateSync(link, { abortEarly: false });
-      return '';
-    } catch (e) {
-      return e.message;
-    }
-  };
+  const schema = () => yup.string().url(i18next.t('formErrors.invalid')).notOneOf(rssLinks, i18next.t('formErrors.used'));
 
-  const loadContentsFromLink = (link) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`)
-    .then((response) => getDocument(response.data.contents));
+  const getRequest = (link) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`);
 
-  const addPosts = (posts, id) => {
-    [...posts].reverse().forEach((item) => {
-      const postId = watchedState.posts.length + 1;
-      const postTitle = item.querySelector('title').textContent;
-      const postDescription = item.querySelector('description').textContent;
-      const postLink = item.querySelector('link').textContent;
-      const post = {
-        feedId: id,
-        postId,
-        postTitle,
-        postDescription,
-        postLink,
-      };
-      watchedState.posts.push(post);
-    });
-  };
-  const getDateInMs = (stringDate) => new Date(stringDate).getTime();
-
-  const normalizeContent = (content) => {
-    const feedTitle = content.querySelector('title').textContent;
-    const feedDescription = content.querySelector('description').textContent;
-    const lastBuildDate = content.querySelector('item').querySelector('pubDate').textContent;
-    const lastUpdate = getDateInMs(lastBuildDate);
-    const id = state.rssLinks.length;
-    watchedState.feeds.push({
-      id, lastUpdate, feedTitle, feedDescription,
-    });
-
-    const posts = content.querySelectorAll('item');
-    addPosts(posts, id);
-    watchedState.processState = 'loaded';
-  };
   const networkErrorHandler = () => {
     const errMessage = i18next.t('network');
     watchedState.form.errorMessage = errMessage;
     watchedState.processState = 'failed';
-    // throw new Error(errMessage);
+    throw new Error(errMessage);
   };
 
-  const updateContent = () => {
-    watchedState.rssLinks.forEach((value, index) => {
-      const content = loadContentsFromLink(value);
-      const { lastUpdate } = watchedState.feeds[index];
-      content.then((doc) => {
-        const lastPostDate = doc.querySelector('item').querySelector('pubDate').textContent;
-        const lastPostDateInMs = getDateInMs(lastPostDate);
-        if (lastUpdate !== lastPostDateInMs) {
-          const posts = doc.querySelectorAll('item');
-          watchedState.feeds[index].lastUpdate = lastPostDateInMs;
-          const newPosts = [...posts].filter((post) => {
-            const postDate = post.querySelector('pubDate').textContent;
-            const postDateInMs = getDateInMs(postDate);
-            return lastUpdate < postDateInMs;
-          });
-          addPosts(newPosts, index + 1);
-          watchedState.processState = 'updated';
-          watchedState.processState = 'active';
-          setTimeout(updateContent, 5000);
-        }
-      })
-        .catch(() => networkErrorHandler());
+  const normalizePosts = (feedId, posts) => posts
+    .map((item) => {
+      const post = item;
+      post.feedId = feedId;
+      post.id = _.uniqueId();
+      return post;
     });
+
+  const normalizeContents = (content, link) => {
+    const id = _.uniqueId();
+    const { title, description } = content.feed;
+    const feed = {
+      title, description, link, id,
+    };
+    const posts = normalizePosts(id, [...content.posts]);
+    return { feed, posts };
   };
-  const isDocumentRss = (doc) => {
-    const rssTag = doc.querySelector('rss');
-    return rssTag !== null;
+
+  const getNewPosts = (oldPosts, allPosts) => {
+    const posts = [];
+    allPosts.forEach((post) => {
+      const isNewPost = !oldPosts.find((p) => p.title === post.title);
+      if (isNewPost) {
+        posts.push(post);
+      }
+    });
+    return posts;
   };
+
+  const updatePosts = (feeds, oldPosts) => {
+    console.log(feeds);
+    console.log(oldPosts);
+    const promises = feeds.map((feed) => getRequest(feed.link)
+      .then((response) => {
+        const contents = parseContents(response.data.contents);
+        const newPosts = getNewPosts(oldPosts, contents.posts);
+        if (newPosts.length < 1) {
+          return [];
+        }
+        const normalizeNewPosts = normalizePosts(feed.id, newPosts);
+        return normalizeNewPosts;
+      }));
+    Promise.all(promises)
+      .then((values) => {
+        watchedState.posts.push(...values.flat());
+        watchedState.processState = 'updated';
+        watchedState.processState = 'idle';
+      })
+      .catch((e) => console.log(e))
+      .finally(() => setInterval(() => updatePosts(state.feeds, state.posts), 5000));
+  };
+
   domElements.form.addEventListener('submit', (event) => {
     event.preventDefault();
     watchedState.processState = 'processed';
-    const link = domElements.input.value;
-    const errorMessage = validate(link);
-    if (errorMessage.length < 1) {
-      const contents = loadContentsFromLink(link);
-      contents
-        .then((data) => {
-          const rss = isDocumentRss(data);
-          if (rss) {
-            watchedState.rssLinks.push(link);
-            normalizeContent(data);
-            setTimeout(updateContent, 5000);
-          } else {
-            watchedState.form.errorMessage = i18next.t('formErrors.isNotRss');
-            watchedState.processState = 'failed';
-          }
-        })
-        .catch(() => {
-          networkErrorHandler();
-        });
-    } else {
+    const formData = new FormData(event.target);
+    const link = formData.get('url');
+    const errorMessage = validate(link, schema);
+
+    if (errorMessage) {
       watchedState.form.errorMessage = errorMessage;
       watchedState.processState = 'failed';
+    } else {
+      watchedState.processState = 'loading';
+      getRequest(link)
+        .then((response) => {
+          const contents = parseContents(response.data.contents);
+          const normalizedContents = normalizeContents(contents, link);
+          rssLinks.push(link);
+          watchedState.feeds.push(normalizedContents.feed);
+          watchedState.posts.push(...normalizedContents.posts);
+          watchedState.processState = 'succeeded';
+          setTimeout(() => updatePosts(state.feeds, state.posts), 5000);
+        })
+        .catch(() => networkErrorHandler());
     }
   });
 };

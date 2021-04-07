@@ -1,41 +1,42 @@
 import i18next from 'i18next';
 
-const renderError = (formState) => {
+const renderError = (errorMessage) => {
   const feedbackElement = document.querySelector('.feedback');
   const input = document.querySelector('input');
   input.classList.add('is-invalid');
   feedbackElement.classList.add('text-danger');
   feedbackElement.classList.remove('text-success');
-  feedbackElement.textContent = formState.errorMessage;
+  feedbackElement.textContent = errorMessage;
 };
 
-const renderHeaderAfterLoad = () => {
-  const feedbackElement = document.querySelector('.feedback');
-  const input = document.querySelector('input');
+const renderHeaderAfterLoad = (domElements) => {
+  const { feedback, input, button } = domElements;
   input.value = '';
   input.focus();
   input.classList.remove('is-invalid');
-  feedbackElement.classList.add('text-success');
-  feedbackElement.classList.remove('text-danger');
-  feedbackElement.textContent = i18next.t('feedback');
+  feedback.classList.add('text-success');
+  feedback.classList.remove('text-danger');
+  feedback.textContent = i18next.t('feedback');
+  button.removeAttribute('disabled');
+  input.removeAttribute('readonly');
 };
 
-const renderFeed = ({ id, feedTitle, feedDescription }) => {
-  const container = document.querySelector('.feeds');
+const renderFeed = (feed, domElements) => {
+  const { title, description, id } = feed;
   if (id < 2) {
     const h2 = document.createElement('h2');
     const ul = document.createElement('ul');
     ul.classList.add('list-group', 'mb-5');
     h2.textContent = 'Фиды';
-    container.append(h2, ul);
+    domElements.feeds.append(h2, ul);
   }
   const ul = document.querySelector('.feeds>ul');
   const li = document.createElement('li');
   const h3 = document.createElement('h3');
   const p = document.createElement('p');
   li.classList.add('list-group-item');
-  h3.textContent = feedTitle;
-  p.textContent = feedDescription;
+  h3.textContent = title;
+  p.textContent = description;
   li.append(h3, p);
   ul.prepend(li);
 };
@@ -66,12 +67,12 @@ const createButton = (postId, postTitle, postDescription, postLink, openedPosts)
 
 const isLinkOpened = (postId, openedPosts) => !!openedPosts.find((item) => postId === item.id);
 
-const createLink = (postId, postTitle, postLink, openedPosts) => {
+const createLink = (id, title, link, openedPosts) => {
   const a = document.createElement('a');
-  a.setAttribute('href', postLink);
+  a.setAttribute('href', link);
   a.setAttribute('target', 'blank');
-  a.textContent = postTitle;
-  if (isLinkOpened(postId, openedPosts)) {
+  a.textContent = title;
+  if (isLinkOpened(id, openedPosts)) {
     a.classList.remove('font-weight-bold');
     a.classList.add('font-weight-normal');
   } else {
@@ -79,31 +80,29 @@ const createLink = (postId, postTitle, postLink, openedPosts) => {
   }
   return a;
 };
-
-const renderPosts = (state) => {
-  const container = document.querySelector('.posts');
-  container.innerHTML = '';
-
+// как передовать state
+const renderPosts = (posts, uiState, domElements) => {
+  const postsContainer = domElements.posts;
+  postsContainer.innerHTML = '';
   const h2 = document.createElement('h2');
   h2.textContent = 'Посты';
 
   const ul = document.createElement('ul');
   ul.classList.add('list-group');
-  const { openedPosts } = state.uiState;
-  state.posts.forEach((post) => {
+  const { openedPosts } = uiState;
+  posts.forEach((post) => {
     const {
-      postId, postTitle, postDescription, postLink,
+      id, title, description, link,
     } = post;
-
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
 
-    const a = createLink(postId, postTitle, postLink, openedPosts);
-    const button = createButton(postId, postTitle, postDescription, postLink, openedPosts);
+    const a = createLink(id, title, link, openedPosts);
+    const button = createButton(id, title, description, link, openedPosts);
     li.append(a, button);
     ul.prepend(li);
   });
-  container.append(h2, ul);
+  postsContainer.append(h2, ul);
 };
 
 export {
