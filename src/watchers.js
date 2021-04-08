@@ -7,7 +7,6 @@ import {
 const processStateHandler = (processState, state, domElements, i18nextInstance) => {
   switch (processState) {
     case 'loading':
-      console.log(i18nextInstance);
       domElements.button.setAttribute('disabled', true);
       domElements.input.setAttribute('readonly', true);
       break;
