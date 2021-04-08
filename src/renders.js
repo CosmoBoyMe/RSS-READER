@@ -1,12 +1,13 @@
 import i18next from 'i18next';
 import resources from './locales/index.js';
 
-const newInstance = i18next.createInstance();
-newInstance.init({
-  lng: 'ru',
-  debug: 'true',
-  resources,
-});
+const newInstance = i18next.createInstance(
+  {
+    lng: 'ru',
+    debug: 'true',
+    resources,
+  },
+);
 
 const renderError = (errorMessage) => {
   const feedbackElement = document.querySelector('.feedback');
