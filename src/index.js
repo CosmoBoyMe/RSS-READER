@@ -9,7 +9,6 @@ import validate from './utilits.js/validate.js';
 import getRequest from './utilits.js/getRequest.js';
 
 const app = (i18nextInstance) => {
-  console.log(i18nextInstance);
   const domElements = {
     form: document.querySelector('.rss-form'),
     input: document.querySelector('.rss-form input'),
