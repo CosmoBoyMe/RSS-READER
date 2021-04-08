@@ -1,12 +1,14 @@
 import 'bootstrap';
 import * as yup from 'yup';
 import i18next from 'i18next';
-import axios from 'axios';
-import _, { update } from 'lodash';
-import parseContents from './parser.js';
 import resources from './locales/index.js';
-import initView from './view.js';
-import validate from './validate.js';
+import watch from './watchers.js';
+
+import updatePosts from './updatePost.js';
+import normalizeContents from './utilits.js/normalizeContents';
+import parseContents from './utilits.js/parser.js';
+import validate from './utilits.js/validate.js';
+import getRequest from './utilits.js/getRequest.js';
 
 const app = () => {
   const domElements = {
@@ -18,7 +20,7 @@ const app = () => {
     posts: document.querySelector('.posts'),
   };
 
-  const state = {
+  const initState = {
     form: {
       errorMessage: '',
     },
@@ -27,10 +29,10 @@ const app = () => {
     uiState: {
       openedPosts: [],
     },
-    processState: 'idle',
+    appProcessState: 'idle',
   };
 
-  const watchedState = initView(state, domElements);
+  const watcher = watch(initState, domElements);
 
   i18next.init({
     lng: 'ru',
@@ -42,92 +44,37 @@ const app = () => {
 
   const schema = () => yup.string().url(i18next.t('formErrors.invalid')).notOneOf(rssLinks, i18next.t('formErrors.used'));
 
-  const getRequest = (link) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`);
-
   const networkErrorHandler = () => {
     const errMessage = i18next.t('network');
-    watchedState.form.errorMessage = errMessage;
-    watchedState.processState = 'failed';
-    throw new Error(errMessage);
-  };
-
-  const normalizePosts = (feedId, posts) => posts
-    .map((item) => {
-      const post = item;
-      post.feedId = feedId;
-      post.id = _.uniqueId();
-      return post;
-    });
-
-  const normalizeContents = (content, link) => {
-    const id = _.uniqueId();
-    const { title, description } = content.feed;
-    const feed = {
-      title, description, link, id,
-    };
-    const posts = normalizePosts(id, [...content.posts]);
-    return { feed, posts };
-  };
-
-  const getNewPosts = (oldPosts, allPosts) => {
-    const posts = [];
-    allPosts.forEach((post) => {
-      const isNewPost = !oldPosts.find((p) => p.title === post.title);
-      if (isNewPost) {
-        posts.push(post);
-      }
-    });
-    return posts;
-  };
-
-  const updatePosts = (feeds, oldPosts) => {
-    console.log(feeds);
-    console.log(oldPosts);
-    const promises = feeds.map((feed) => getRequest(feed.link)
-      .then((response) => {
-        const contents = parseContents(response.data.contents);
-        const newPosts = getNewPosts(oldPosts, contents.posts);
-        if (newPosts.length < 1) {
-          return [];
-        }
-        const normalizeNewPosts = normalizePosts(feed.id, newPosts);
-        return normalizeNewPosts;
-      }));
-    Promise.all(promises)
-      .then((values) => {
-        watchedState.posts.push(...values.flat());
-        watchedState.processState = 'updated';
-        watchedState.processState = 'idle';
-      })
-      .catch((e) => console.log(e))
-      .finally(() => setInterval(() => updatePosts(state.feeds, state.posts), 5000));
+    watcher.form.errorMessage = errMessage;
+    watcher.appProcessState = 'failed';
+    // throw new Error(errMessage);
   };
 
   domElements.form.addEventListener('submit', (event) => {
     event.preventDefault();
-    watchedState.processState = 'processed';
+    watcher.appProcessState = 'processed';
     const formData = new FormData(event.target);
     const link = formData.get('url');
     const errorMessage = validate(link, schema);
-
     if (errorMessage) {
-      watchedState.form.errorMessage = errorMessage;
-      watchedState.processState = 'failed';
+      watcher.form.errorMessage = errorMessage;
+      watcher.appProcessState = 'failed';
     } else {
-      watchedState.processState = 'loading';
+      watcher.appProcessState = 'loading';
       getRequest(link)
         .then((response) => {
           const contents = parseContents(response.data.contents);
           const normalizedContents = normalizeContents(contents, link);
           rssLinks.push(link);
-          watchedState.feeds.push(normalizedContents.feed);
-          watchedState.posts.push(...normalizedContents.posts);
-          watchedState.processState = 'succeeded';
-          setTimeout(() => updatePosts(state.feeds, state.posts), 5000);
+          watcher.feeds.push(normalizedContents.feed);
+          watcher.posts.push(...normalizedContents.posts);
+          watcher.appProcessState = 'succeeded';
         })
         .catch(() => networkErrorHandler());
     }
   });
+  setTimeout(() => updatePosts(watcher), 5000);
 };
 
 export default app;

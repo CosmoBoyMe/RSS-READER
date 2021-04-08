@@ -46,9 +46,9 @@ const createButton = (postId, postTitle, postDescription, postLink, openedPosts)
   button.classList.add('btn', 'btn-primary');
   button.textContent = i18next.t('button');
   button.setAttribute('type', 'button');
-  button.setAttribute('id', postId);
-  button.setAttribute('data-bs-toggle', 'modal');
-  button.setAttribute('data-bs-target', '#modal');
+  button.setAttribute('data-id', postId);
+  button.setAttribute('data-toggle', 'modal');
+  button.setAttribute('data-target', '#modal');
   button.addEventListener('click', (event) => {
     const modalTitle = document.querySelector('.modal-title');
     const modalBody = document.querySelector('.modal-body');
@@ -80,7 +80,7 @@ const createLink = (id, title, link, openedPosts) => {
   }
   return a;
 };
-// как передовать state
+
 const renderPosts = (posts, uiState, domElements) => {
   const postsContainer = domElements.posts;
   postsContainer.innerHTML = '';

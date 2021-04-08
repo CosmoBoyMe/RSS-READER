@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RSS агрегатор</title>
 </head>
+
 <body class="d-flex flex-column min-vh-100">
-<!-- Modal -->
-<div class="modal fade" id="modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-      </div>
-      <div class="modal-footer">
-        <a type="button" href="#" class="btn btn-primary full-article" target="_blank">Читать полностью</a>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+  <!-- Modal -->
+  <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+              aria-hidden="true">×</span></button>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer"><a class="btn btn-primary full-article" href="#" role="button" target="_blank"
+            rel="noopener noreferrer">Читать полностью </a><button type="button" class="btn btn-secondary"
+            data-dismiss="modal">Закрыть</button></div>
       </div>
     </div>
   </div>
-</div>
   <header class="bg-dark">
     <div class="container-fluid bg-dark p-5">
       <div class="row ml-2">
@@ -33,7 +33,8 @@
           <form action="" class="rss-form">
             <div class="row">
               <div class="col-sm-8">
-                <input autofocus="" required="" name="url" aria-label="url" class="form-control form-control-lg w-100" placeholder="ссылка RSS">
+                <input autofocus="" required="" name="url" aria-label="url" class="form-control form-control-lg w-100"
+                  placeholder="ссылка RSS">
               </div>
               <div class="col-sm-4">
                 <button type="submit" aria-label="add" class="btn btn-lg btn-primary px-sm-5">Add</button>
@@ -59,4 +60,5 @@
     </section>
   </main>
 </body>
+
 </html>

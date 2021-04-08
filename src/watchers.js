@@ -30,12 +30,12 @@ const processStateHandler = (processState, state, domElements) => {
   }
 };
 
-const initView = (state, domElements) => {
-  const watchedState = onChange(state, (path, value) => {
-    if (path === 'processState') {
+const watcher = (state, domElements) => {
+  const watch = onChange(state, (path, value) => {
+    if (path === 'appProcessState') {
       processStateHandler(value, state, domElements);
     }
   });
-  return watchedState;
+  return watch;
 };
-export default initView;
+export default watcher;
