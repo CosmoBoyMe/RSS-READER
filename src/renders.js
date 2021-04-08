@@ -1,4 +1,12 @@
 import i18next from 'i18next';
+import resources from './locales/index.js';
+
+const newInstance = i18next.createInstance();
+newInstance.init({
+  lng: 'ru',
+  debug: 'true',
+  resources,
+});
 
 const renderError = (errorMessage) => {
   const feedbackElement = document.querySelector('.feedback');
@@ -6,7 +14,7 @@ const renderError = (errorMessage) => {
   input.classList.add('is-invalid');
   feedbackElement.classList.add('text-danger');
   feedbackElement.classList.remove('text-success');
-  feedbackElement.textContent = errorMessage;
+  feedbackElement.textContent = newInstance.t(errorMessage);
 };
 
 const renderHeaderAfterLoad = (domElements) => {
@@ -16,7 +24,7 @@ const renderHeaderAfterLoad = (domElements) => {
   input.classList.remove('is-invalid');
   feedback.classList.add('text-success');
   feedback.classList.remove('text-danger');
-  feedback.textContent = i18next.t('feedback');
+  feedback.textContent = newInstance.t('feedback');
   button.removeAttribute('disabled');
   input.removeAttribute('readonly');
 };
@@ -44,7 +52,7 @@ const renderFeed = (feed, domElements) => {
 const createButton = (postId, postTitle, postDescription, postLink, openedPosts) => {
   const button = document.createElement('button');
   button.classList.add('btn', 'btn-primary');
-  button.textContent = i18next.t('button');
+  button.textContent = newInstance.t('button');
   button.setAttribute('type', 'button');
   button.setAttribute('data-id', postId);
   button.setAttribute('data-toggle', 'modal');

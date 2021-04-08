@@ -1,7 +1,5 @@
 import 'bootstrap';
 import * as yup from 'yup';
-import i18next from 'i18next';
-import resources from './locales/index.js';
 import watch from './watchers.js';
 
 import updatePosts from './updatePost.js';
@@ -34,18 +32,12 @@ const app = () => {
 
   const watcher = watch(initState, domElements);
 
-  i18next.init({
-    lng: 'ru',
-    debug: 'true',
-    resources,
-  });
-
   const rssLinks = [];
 
-  const schema = () => yup.string().url(i18next.t('formErrors.invalid')).notOneOf(rssLinks, i18next.t('formErrors.used'));
+  const schema = () => yup.string().url('formErrors.invalid').notOneOf(rssLinks, 'formErrors.used');
 
   const networkErrorHandler = () => {
-    const errMessage = i18next.t('network');
+    const errMessage = 'network';
     watcher.form.errorMessage = errMessage;
     watcher.appProcessState = 'failed';
     // throw new Error(errMessage);
