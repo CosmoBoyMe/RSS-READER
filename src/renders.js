@@ -1,7 +1,8 @@
 import i18next from 'i18next';
 import resources from './locales/index.js';
 
-const newInstance = i18next.createInstance(
+const newInstance = i18next.createInstance();
+newInstance.init(
   {
     lng: 'ru',
     debug: 'true',
@@ -15,6 +16,9 @@ const renderError = (errorMessage) => {
   input.classList.add('is-invalid');
   feedbackElement.classList.add('text-danger');
   feedbackElement.classList.remove('text-success');
+  console.log(errorMessage);
+  console.log(newInstance);
+  console.log(newInstance.t(errorMessage));
   feedbackElement.textContent = newInstance.t(errorMessage);
 };
 
