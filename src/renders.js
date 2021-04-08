@@ -1,35 +1,20 @@
-import i18next from 'i18next';
-import resources from './locales/index.js';
-
-const newInstance = i18next.createInstance();
-newInstance.init(
-  {
-    lng: 'ru',
-    debug: 'true',
-    resources,
-  },
-);
-
-const renderError = (errorMessage) => {
+const renderError = (errorMessage, i18nextInstance) => {
   const feedbackElement = document.querySelector('.feedback');
   const input = document.querySelector('input');
   input.classList.add('is-invalid');
   feedbackElement.classList.add('text-danger');
   feedbackElement.classList.remove('text-success');
-  console.log(errorMessage);
-  console.log(newInstance);
-  console.log(newInstance.t(errorMessage));
-  feedbackElement.textContent = newInstance.t(errorMessage);
+  feedbackElement.textContent = i18nextInstance.t(errorMessage);
 };
 
-const renderHeaderAfterLoad = (domElements) => {
+const renderHeaderAfterLoad = (domElements, i18nextInstance) => {
   const { feedback, input, button } = domElements;
   input.value = '';
   input.focus();
   input.classList.remove('is-invalid');
   feedback.classList.add('text-success');
   feedback.classList.remove('text-danger');
-  feedback.textContent = newInstance.t('feedback');
+  feedback.textContent = i18nextInstance.t('feedback');
   button.removeAttribute('disabled');
   input.removeAttribute('readonly');
 };
@@ -54,10 +39,10 @@ const renderFeed = (feed, domElements) => {
   ul.prepend(li);
 };
 
-const createButton = (postId, postTitle, postDescription, postLink, openedPosts) => {
+const createButton = (postId, title, description, link, openedPosts, i18nextInstance) => {
   const button = document.createElement('button');
   button.classList.add('btn', 'btn-primary');
-  button.textContent = newInstance.t('button');
+  button.textContent = i18nextInstance.t('button');
   button.setAttribute('type', 'button');
   button.setAttribute('data-id', postId);
   button.setAttribute('data-toggle', 'modal');
@@ -66,9 +51,9 @@ const createButton = (postId, postTitle, postDescription, postLink, openedPosts)
     const modalTitle = document.querySelector('.modal-title');
     const modalBody = document.querySelector('.modal-body');
     const openLinkBtn = document.querySelector('.full-article');
-    openLinkBtn.href = postLink;
-    modalTitle.textContent = postTitle;
-    modalBody.textContent = postDescription;
+    openLinkBtn.href = link;
+    modalTitle.textContent = title;
+    modalBody.textContent = description;
     openedPosts.push({ id: postId });
     const postLinkElement = event.target.previousElementSibling;
     postLinkElement.classList.remove('font-weight-bold');
@@ -94,7 +79,7 @@ const createLink = (id, title, link, openedPosts) => {
   return a;
 };
 
-const renderPosts = (posts, uiState, domElements) => {
+const renderPosts = (posts, uiState, domElements, i18nextInstance) => {
   const postsContainer = domElements.posts;
   postsContainer.innerHTML = '';
   const h2 = document.createElement('h2');
@@ -111,7 +96,7 @@ const renderPosts = (posts, uiState, domElements) => {
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
 
     const a = createLink(id, title, link, openedPosts);
-    const button = createButton(id, title, description, link, openedPosts);
+    const button = createButton(id, title, description, link, openedPosts, i18nextInstance);
     li.append(a, button);
     ul.prepend(li);
   });

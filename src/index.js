@@ -8,7 +8,8 @@ import parseContents from './utilits.js/parser.js';
 import validate from './utilits.js/validate.js';
 import getRequest from './utilits.js/getRequest.js';
 
-const app = () => {
+const app = (i18nextInstance) => {
+  console.log(i18nextInstance);
   const domElements = {
     form: document.querySelector('.rss-form'),
     input: document.querySelector('.rss-form input'),
@@ -30,7 +31,7 @@ const app = () => {
     appProcessState: 'idle',
   };
 
-  const watcher = watch(initState, domElements);
+  const watcher = watch(initState, domElements, i18nextInstance);
 
   const rssLinks = [];
 
