@@ -77,7 +77,7 @@ const app = (i18nextInstance) => {
         return normalizeNewPosts;
       })
       .catch((e) => {
-        throw new Error(e);
+        console.log(e);
       }));
     Promise.all(promises)
       .finally(() => setTimeout(() => updatePosts(state), TIMEOUT));
@@ -120,7 +120,6 @@ const app = (i18nextInstance) => {
         .catch((e) => {
           watcher.errorMessage = e.message;
           watcher.loadingState = 'failed';
-          throw new Error(e);
         });
     }
   });
