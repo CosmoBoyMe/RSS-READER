@@ -4,7 +4,7 @@ export default (stringContainingHTMLSource) => {
 
   const error = dom.querySelector('parsererror');
   if (error) {
-    throw new Error('invalid');
+    throw new Error('formErrors.isNotRss');
   }
   const getTitle = (doc) => doc.querySelector('title');
   const getDescription = (doc) => doc.querySelector('description');

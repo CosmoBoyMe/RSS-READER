@@ -108,16 +108,22 @@ const app = (i18nextInstance) => {
     } else {
       watcher.form.valid = false;
       axios.get(buildPathForLink(link))
+        .catch(() => {
+          throw new Error('networkError');
+        })
         .then((response) => {
           const contents = parseContents(response.data.contents);
           const normalizedContents = normalizeContents(contents, link);
-          rssLinks.push(link);
           watcher.loadingState = 'loading';
           watcher.feeds.push(normalizedContents.feed);
           watcher.posts.push(...normalizedContents.posts);
           watcher.loadingState = 'succeeded';
+          rssLinks.push(link);
         })
-        .catch(() => networkErrorHandler());
+        .catch((e) => {
+          watcher.errorMessage = e.message;
+          watcher.loadingState = 'failed';
+        });
     }
   });
   setTimeout(() => updatePosts(watcher), TIMEOUT);
