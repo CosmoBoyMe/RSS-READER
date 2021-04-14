@@ -8,5 +8,8 @@ export default {
     button: 'Просмотр',
     feedback: 'RSS успешно загружен',
     network: 'Ошибка сети',
+    feeds: 'Фиды',
+    posts: 'Посты',
+
   },
 };
