@@ -70,7 +70,6 @@ const watcher = (state, domElements, i18nextInstance) => {
     modalButton.setAttribute('data-target', '#modal');
     modalButton.addEventListener('click', (event) => {
       const openedLinkBtn = document.querySelector('.full-article');
-      console.log(modalTitle);
       openedLinkBtn.href = link;
       modalTitle.textContent = title;
       modalBody.textContent = description;

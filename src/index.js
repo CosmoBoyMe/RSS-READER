@@ -38,11 +38,6 @@ const app = (i18nextInstance) => {
 
   const schema = yup.string().url('formErrors.invalid').required();
 
-  const networkErrorHandler = () => {
-    watcher.errorMessage = 'network';
-    watcher.loadingState = 'failed';
-  };
-
   const validate = (link, validateSchema, usedLinks) => {
     try {
       validateSchema.notOneOf(usedLinks, 'formErrors.used').validateSync(link);
@@ -81,7 +76,9 @@ const app = (i18nextInstance) => {
         state.posts.push(...normalizeNewPosts);
         return normalizeNewPosts;
       })
-      .catch((e) => console.log(e)));
+      .catch((e) => {
+        throw new Error(e);
+      }));
     Promise.all(promises)
       .finally(() => setTimeout(() => updatePosts(state), TIMEOUT));
   };
@@ -123,6 +120,7 @@ const app = (i18nextInstance) => {
         .catch((e) => {
           watcher.errorMessage = e.message;
           watcher.loadingState = 'failed';
+          throw new Error(e);
         });
     }
   });
