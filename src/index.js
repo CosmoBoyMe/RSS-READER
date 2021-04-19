@@ -106,11 +106,10 @@ const app = (i18nextInstance) => {
         .catch((error) => {
           if (error.isAxiosError) {
             watcher.errorMessage = 'networkError';
-          } if (error.isParsingError) {
+          } else if (error.isParsingError) {
             watcher.errorMessage = error.message;
           } else {
             watcher.errorMessage = 'unexpectedError';
-            throw new Error(error.message);
           }
           watcher.loadingState = 'failed';
         });
