@@ -31,6 +31,7 @@ const app = (i18nextInstance) => {
     },
     loadingState: 'idle',
     errorMessage: '',
+    modal: null,
   };
 
   const watcher = watch(initState, domElements, i18nextInstance);
@@ -100,7 +101,6 @@ const app = (i18nextInstance) => {
           const normalizedContent = normalizeContent(content, currentLink);
           watcher.feeds.push(normalizedContent.feed);
           watcher.posts.push(...normalizedContent.posts);
-          watcher.loadingState = 'succeeded';
           watcher.loadingState = 'idle';
         })
         .catch((error) => {
@@ -124,16 +124,12 @@ const app = (i18nextInstance) => {
     }
 
     const { id } = target.dataset;
-    const currentPost = watcher.posts.filter((post) => post.id === id);
-    const { title, description, link } = currentPost[0];
-    const modalOpenedFullLinkBtn = document.querySelector('.full-article');
-    modalOpenedFullLinkBtn.href = link;
-    domElements.modalTitle.textContent = title;
-    domElements.modalBody.textContent = description;
+    const currentPost = watcher.posts.find((post) => post.id === id);
+    const { title, description, link } = currentPost;
+    watcher.modal = {
+      link, title, description,
+    };
     watcher.uiState.openedPosts.add(id);
-    const postLinkElement = target.previousElementSibling;
-    postLinkElement.classList.remove('font-weight-bold');
-    postLinkElement.classList.add('font-weight-normal');
   });
 
   setTimeout(() => updatePosts(watcher), TIMEOUT);

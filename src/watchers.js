@@ -7,6 +7,8 @@ const watcher = (state, domElements, i18nextInstance) => {
     feedback,
     feedsContainer,
     postsContainer,
+    modalTitle,
+    modalBody,
   } = domElements;
 
   const renderError = (errorMessage) => {
@@ -59,18 +61,19 @@ const watcher = (state, domElements, i18nextInstance) => {
     return modalButton;
   };
 
-  const createLink = (postId, title, link, openedPosts) => {
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', link);
-    linkElement.setAttribute('target', 'blank');
-    linkElement.textContent = title;
-    if (openedPosts.has(postId)) {
-      linkElement.classList.remove('font-weight-bold');
-      linkElement.classList.add('font-weight-normal');
-    } else {
-      linkElement.classList.add('font-weight-bold');
-    }
-    return linkElement;
+  const renderReedPosts = (openedPosts) => {
+    const postItems = postsContainer.querySelectorAll('li');
+    Array.from(postItems).forEach((post) => {
+      const postLinkElement = post.querySelector('a');
+      const postButton = post.querySelector('button');
+      const { id } = postButton.dataset;
+      if (openedPosts.has(id)) {
+        postLinkElement.classList.remove('font-weight-bold');
+        postLinkElement.classList.add('font-weight-normal');
+      } else {
+        postLinkElement.classList.add('font-weight-bold');
+      }
+    });
   };
 
   const renderPosts = (posts, openedPosts) => {
@@ -83,26 +86,36 @@ const watcher = (state, domElements, i18nextInstance) => {
       const li = document.createElement('li');
       li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
 
-      const a = createLink(id, title, link, openedPosts);
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', link);
+      linkElement.setAttribute('target', 'blank');
+      linkElement.textContent = title;
       const modalButton = createModalButton(id);
-      li.append(a, modalButton);
+      li.append(linkElement, modalButton);
       ul.prepend(li);
     });
+
     postsContainer.innerHTML = '';
     postsContainer.append(h2, ul);
+    renderReedPosts(openedPosts);
+  };
+
+  const renderModal = (modal) => {
+    const { link, title, description } = modal;
+    const modalOpenedFullLinkBtn = document.querySelector('.full-article');
+    modalOpenedFullLinkBtn.href = link;
+    modalTitle.textContent = title;
+    modalBody.textContent = description;
   };
 
   const processStateHandler = (processState) => {
     switch (processState) {
-      case 'idle': {
-        return;
-      }
       case 'loading': {
         rssFormSubmitButton.setAttribute('disabled', true);
         rssFormInput.setAttribute('readonly', true);
         break;
       }
-      case 'succeeded': {
+      case 'idle': {
         rssFormInput.value = '';
         rssFormInput.focus();
         rssFormInput.classList.remove('is-invalid');
@@ -143,7 +156,11 @@ const watcher = (state, domElements, i18nextInstance) => {
       case 'form.errorMessage':
         renderError(value);
         break;
+      case 'modal':
+        renderModal(value);
+        break;
       case 'uiState.openedPosts':
+        renderReedPosts(value);
         break;
       default: {
         throw new Error(`unexpected path in State ${path}`);
