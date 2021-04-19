@@ -7,9 +7,9 @@ export default {
     },
     button: 'Просмотр',
     feedback: 'RSS успешно загружен',
-    networkError: 'Ошибка сети',
     feeds: 'Фиды',
     posts: 'Посты',
-
+    unexpectedError: 'Что-то пошло не так',
+    networkError: 'Ошибка сети',
   },
 };

@@ -4,27 +4,37 @@ export default (stringContainingHTMLSource) => {
 
   const error = dom.querySelector('parsererror');
   if (error) {
-    throw new Error('formErrors.isNotRss');
+    const err = new Error('formErrors.isNotRss');
+    err.isParsingError = true;
+    throw err;
   }
+
   const getTitle = (doc) => doc.querySelector('title');
   const getDescription = (doc) => doc.querySelector('description');
-  const posts = dom.querySelectorAll(('item'));
-  const channel = {
-    feed: {
-      title: getTitle(dom).textContent,
-      description: getDescription(dom).textContent,
-    },
-    posts: [],
-  };
+  const getLink = (doc) => doc.querySelector('link');
+  const postsElements = dom.querySelectorAll(('item'));
 
-  [...posts].forEach((item) => {
+  const feedTitleElement = getTitle(dom);
+  const feedDescriptionElement = getDescription(dom);
+
+  const posts = Array.from(postsElements).reverse().map((item) => {
+    const postTitleElement = getTitle(item);
+    const postDescriptionElement = getDescription(item);
+    const postLinkElement = getLink(item);
+
     const post = {
-      title: getTitle(item).textContent,
-      description: getDescription(item).textContent,
-      link: item.querySelector('link').textContent,
+      title: postTitleElement.textContent,
+      description: postDescriptionElement.textContent,
+      link: postLinkElement.textContent,
     };
-    channel.posts.unshift(post);
+    return post;
   });
 
-  return channel;
+  return {
+    feed: {
+      title: feedTitleElement.textContent,
+      description: feedDescriptionElement.textContent,
+    },
+    posts,
+  };
 };
