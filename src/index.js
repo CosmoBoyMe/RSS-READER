@@ -48,7 +48,7 @@ const app = (i18nextInstance) => {
 
   const normalizePosts = (feedId, posts) => posts
     .map((item) => ({
-      ...item, feedId, id: uniqueId(),
+      ...item, feedId, id: _.uniqueId(),
     }));
 
   const buildPathForLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`;
