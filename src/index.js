@@ -17,6 +17,7 @@ const app = (i18nextInstance) => {
     postsContainer: document.querySelector('.posts'),
     modalTitle: document.querySelector('#modal .modal-title'),
     modalBody: document.querySelector('#modal .modal-body'),
+    modalFullArticle: document.querySelector('#modal .full-article'),
   };
 
   const initState = {
@@ -31,7 +32,7 @@ const app = (i18nextInstance) => {
     },
     loadingState: 'idle',
     errorMessage: '',
-    modal: null,
+    selectedModalId: null,
   };
 
   const watcher = watch(initState, domElements, i18nextInstance);
@@ -124,11 +125,7 @@ const app = (i18nextInstance) => {
     }
 
     const { id } = target.dataset;
-    const currentPost = watcher.posts.find((post) => post.id === id);
-    const { title, description, link } = currentPost;
-    watcher.modal = {
-      link, title, description,
-    };
+    watcher.selectedModalId = id;
     watcher.uiState.openedPosts.add(id);
   });
 

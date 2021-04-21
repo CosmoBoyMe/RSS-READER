@@ -9,6 +9,7 @@ const watcher = (state, domElements, i18nextInstance) => {
     postsContainer,
     modalTitle,
     modalBody,
+    modalFullArticle,
   } = domElements;
 
   const renderError = (errorMessage) => {
@@ -61,21 +62,6 @@ const watcher = (state, domElements, i18nextInstance) => {
     return modalButton;
   };
 
-  const renderReedPosts = (openedPosts) => {
-    const postItems = postsContainer.querySelectorAll('li');
-    Array.from(postItems).forEach((post) => {
-      const postLinkElement = post.querySelector('a');
-      const postButton = post.querySelector('button');
-      const { id } = postButton.dataset;
-      if (openedPosts.has(id)) {
-        postLinkElement.classList.remove('font-weight-bold');
-        postLinkElement.classList.add('font-weight-normal');
-      } else {
-        postLinkElement.classList.add('font-weight-bold');
-      }
-    });
-  };
-
   const renderPosts = (posts, openedPosts) => {
     const h2 = document.createElement('h2');
     h2.textContent = i18nextInstance.t('posts');
@@ -89,6 +75,12 @@ const watcher = (state, domElements, i18nextInstance) => {
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', link);
       linkElement.setAttribute('target', 'blank');
+
+      if (openedPosts.has(id)) {
+        linkElement.classList.add('font-weight-normal');
+      } else {
+        linkElement.classList.add('font-weight-bold');
+      }
       linkElement.textContent = title;
       const modalButton = createModalButton(id);
       li.append(linkElement, modalButton);
@@ -97,13 +89,12 @@ const watcher = (state, domElements, i18nextInstance) => {
 
     postsContainer.innerHTML = '';
     postsContainer.append(h2, ul);
-    renderReedPosts(openedPosts);
   };
 
-  const renderModal = (modal) => {
-    const { link, title, description } = modal;
-    const modalOpenedFullLinkBtn = document.querySelector('.full-article');
-    modalOpenedFullLinkBtn.href = link;
+  const renderModal = (posts, modalId) => {
+    const currentPost = posts.find((post) => post.id === modalId);
+    const { title, link, description } = currentPost;
+    modalFullArticle.href = link;
     modalTitle.textContent = title;
     modalBody.textContent = description;
   };
@@ -156,11 +147,11 @@ const watcher = (state, domElements, i18nextInstance) => {
       case 'form.errorMessage':
         renderError(value);
         break;
-      case 'modal':
-        renderModal(value);
+      case 'selectedModalId':
+        renderModal(watch.posts, value);
         break;
       case 'uiState.openedPosts':
-        renderReedPosts(value);
+        renderPosts(watch.posts, value);
         break;
       default: {
         throw new Error(`unexpected path in State ${path}`);
