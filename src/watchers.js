@@ -141,10 +141,10 @@ const watcher = (state, domElements, i18nextInstance) => {
       case 'feeds':
         renderFeeds(value);
         break;
-      case 'errorMessage':
+      case 'errorMessageKey':
         renderError(value);
         break;
-      case 'form.errorMessage':
+      case 'form.errorMessageKey':
         renderError(value);
         break;
       case 'selectedModalId':
@@ -154,7 +154,7 @@ const watcher = (state, domElements, i18nextInstance) => {
         renderPosts(watch.posts, value);
         break;
       default: {
-        throw new Error(`unexpected path in State ${path}`);
+        break;
       }
     }
   });

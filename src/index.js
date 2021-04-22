@@ -22,8 +22,8 @@ const app = (i18nextInstance) => {
 
   const initState = {
     form: {
-      errorMessage: '',
-      valid: null,
+      errorMessageKey: null,
+      valid: false,
     },
     feeds: [],
     posts: [],
@@ -31,7 +31,7 @@ const app = (i18nextInstance) => {
       openedPosts: new Set(),
     },
     loadingState: 'idle',
-    errorMessage: '',
+    errorMessageKey: null,
     selectedModalId: null,
   };
 
@@ -53,10 +53,15 @@ const app = (i18nextInstance) => {
       ...item, feedId, id: _.uniqueId(),
     }));
 
-  const buildPathForLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`;
+  const buildUrl = (link) => {
+    const url = new URL('https://hexlet-allorigins.herokuapp.com/get');
+    url.searchParams.set('url', link);
+    url.searchParams.set('disableCache', true);
+    return url;
+  };
 
   const updatePosts = (state) => {
-    const promises = state.feeds.map((feed) => axios.get(buildPathForLink(feed.link))
+    const promises = state.feeds.map((feed) => axios.get(buildUrl(feed.link))
       .then((response) => {
         const contents = parseContent(response.data.contents);
         const oldPosts = state.posts.filter((post) => post.feedId === feed.id);
@@ -91,12 +96,12 @@ const app = (i18nextInstance) => {
 
     const errorMessage = validate(currentLink, schema, usedLinks);
     if (errorMessage) {
-      watcher.form.errorMessage = errorMessage;
+      watcher.form.errorMessageKey = errorMessage;
       watcher.form.valid = false;
     } else {
       watcher.form.valid = true;
       watcher.loadingState = 'loading';
-      axios.get(buildPathForLink(currentLink))
+      axios.get(buildUrl(currentLink))
         .then((response) => {
           const content = parseContent(response.data.contents);
           const normalizedContent = normalizeContent(content, currentLink);
@@ -106,11 +111,11 @@ const app = (i18nextInstance) => {
         })
         .catch((error) => {
           if (error.isAxiosError) {
-            watcher.errorMessage = 'networkError';
+            watcher.errorMessageKey = 'networkError';
           } else if (error.isParsingError) {
-            watcher.errorMessage = error.message;
+            watcher.errorMessageKey = error.message;
           } else {
-            watcher.errorMessage = 'unexpectedError';
+            watcher.errorMessageKey = 'unexpectedError';
           }
           watcher.loadingState = 'failed';
         });
