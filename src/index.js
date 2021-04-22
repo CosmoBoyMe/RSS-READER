@@ -57,7 +57,7 @@ const app = (i18nextInstance) => {
     const url = new URL('https://hexlet-allorigins.herokuapp.com/get');
     url.searchParams.set('url', link);
     url.searchParams.set('disableCache', true);
-    return url;
+    return url.href;
   };
 
   const updatePosts = (state) => {
